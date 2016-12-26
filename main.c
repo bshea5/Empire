@@ -1,15 +1,26 @@
+/*
+    Imperial Messengers
+
+    Author: Brandon Shea
+    Compiler: Clang Version 19.10.24728 for x86
+    Summary: 
+        Figure out how long it takes to send a message from the capitol throughout the Empire.
+
+        Dijktra's Algorith is utilized to figure out the shortest routes from the capitol to each city.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <limits.h>
-#include "Empire.h"
 
 #define MAXSIZE 100
 
 int minDistance(int dist[], int sptSet[], int nCities);
 void dijkstra(int adjMatrix[MAXSIZE][MAXSIZE], int src, int nCities);
-int printSolution(int dist[], int n);
+void printMatrix(int adjMatrix[MAXSIZE][MAXSIZE], int nCities);
+int printResults(int dist[], int n);
 
 // TODO: reformat for readabilities sake into Empire.h/.c files
 
@@ -20,14 +31,12 @@ int main(int argc, char* argv[]) {
     // can't initialize array with a given variable,
     // so just used the expected max size in the specs
     int adjMatrix[MAXSIZE][MAXSIZE] = {0};
-
-    FILE* fp;
     
     char line[60];      // track a single row of input
     char* token;        // track a single element in a row
 
     // opening file for reading 
-    fp = fopen("empire01.txt" , "r");
+    FILE* fp = fopen("empire01.txt" , "r");
 
     if(fp == NULL) 
     {
@@ -54,7 +63,6 @@ int main(int argc, char* argv[]) {
         return(-1);
     }
 
-
     // next n-1 lines should contain nRows values, either a number or a 'x'
     while(fgets(line, 100, fp)) 
     {
@@ -73,7 +81,7 @@ int main(int argc, char* argv[]) {
                 adjMatrix[nRows][nTokens] = value;
                 adjMatrix[nTokens][nRows] = value;
             }
-            else if ( tolower(*token) == 'x')
+            else if ( tolower(*token) == 'x' )
             {
                 adjMatrix[nRows][nTokens] = -1;
                 adjMatrix[nTokens][nRows] = -1;
@@ -100,19 +108,9 @@ int main(int argc, char* argv[]) {
         nRows++;
     }
 
-    printf("Number of cities: %i \n", nCities);
-
     fclose(fp);
-
-
-    // print matrix
-    for (int i = 0; i < nCities; i++ ) {
-        for (int j = 0; j < nCities; j++ ) {
-            printf("a[%d][%d] = %d\t", i, j, adjMatrix[i][j]);
-        }
-        printf("\n");
-    }
-
+    printf("Number of cities: %i \n", nCities);
+    printMatrix(adjMatrix, nCities);
     dijkstra(adjMatrix, 0, nCities);   
 }
 
@@ -120,61 +118,82 @@ int main(int argc, char* argv[]) {
 // the set of vertices not yet included in shortest path tree
 int minDistance(int dist[], int sptSet[], int nCities)
 {
-   // Initialize min value
-   int min = INT_MAX, min_index;
-  
-   for (int v = 0; v < MAXSIZE; v++)
-     if (sptSet[v] == 0 && dist[v] <= min)
-         min = dist[v], min_index = v;
-  
-   return min_index;
+    // Initialize min value
+    int min = INT_MAX, min_index;
+
+    for (int v = 0; v < MAXSIZE; v++)
+    {
+        if (sptSet[v] == 0 && dist[v] <= min)
+            min = dist[v], min_index = v;
+    }
+    
+    return min_index;
 }
 
 // Funtion that implements Dijkstra's single source shortest path algorithm
 // for a graph represented using adjacency matrix representation
 void dijkstra(int graph[MAXSIZE][MAXSIZE], int src, int nCities)
 {
-     int dist[MAXSIZE];     // The output array.  dist[i] will hold the shortest
-                      // distance from src to i
-  
-     int sptSet[MAXSIZE]; // sptSet[i] will 1 if vertex i is included in shortest
-                     // path tree or shortest distance from src to i is finalized
-  
-     // Initialize all distances as INFINITE and stpSet[] as 0
-     for (int i = 0; i < MAXSIZE; i++)
+    int dist[MAXSIZE];      // The output array.  dist[i] will hold the shortest
+                            // distance from src to i
+
+    int sptSet[MAXSIZE];    // sptSet[i] will 1 if vertex i is included in shortest
+                            // path tree or shortest distance from src to i is finalized
+
+    // Initialize all distances as INFINITE and stpSet[] as 0
+    for (int i = 0; i < MAXSIZE; i++)
         dist[i] = INT_MAX, sptSet[i] = 0;
-  
-     // Distance of source vertex from itself is always 0
-     dist[src] = 0;
-  
-     // Find shortest path for all vertices
-     for (int count = 0; count < MAXSIZE-1; count++)
-     {
-       // Pick the minimum distance vertex from the set of vertices not
-       // yet processed. u is always equal to src in first iteration.
-       int u = minDistance(dist, sptSet, nCities);
-  
-       // Mark the picked vertex as processed
-       sptSet[u] = 1;
-  
-       // Update dist value of the adjacent vertices of the picked vertex.
-       for (int v = 0; v < MAXSIZE; v++)
-  
-         // Update dist[v] only if is not in sptSet, there is an edge from 
-         // u to v, and total weight of path from src to  v through u is 
-         // smaller than current value of dist[v]
-         if (!sptSet[v] && graph[u][v] && dist[u] != INT_MAX 
-                                       && dist[u]+graph[u][v] < dist[v])
-            dist[v] = dist[u] + graph[u][v];
-     }
-  
-     // print the constructed distance array
-     printSolution(dist, nCities);
+
+    // Distance of source vertex from itself is always 0
+    dist[src] = 0;
+
+    // Find shortest path for all vertices
+    for (int count = 0; count < nCities-1; count++)
+    {
+        // Pick the minimum distance vertex from the set of vertices not
+        // yet processed. u is always equal to src in first iteration.
+        int u = minDistance(dist, sptSet, nCities);
+
+        // Mark the picked vertex as processed
+        sptSet[u] = 1;
+
+        // Update dist value of the adjacent vertices of the picked vertex.
+        for (int v = 0; v < nCities; v++)
+        {
+            // Update dist[v] only if is not in sptSet, there is an edge from 
+            // u to v, and total weight of path from src to  v through u is 
+            // smaller than current value of dist[v]
+            if (!sptSet[v] && (graph[u][v] && graph[u][v] != -1) 
+                && dist[u] != INT_MAX && dist[u]+graph[u][v] < dist[v])
+            {
+                dist[v] = dist[u] + graph[u][v];
+            }
+        }
+    }
+
+    // print the constructed distance array
+    printResults(dist, nCities);
 }
 
-int printSolution(int dist[], int n)
+void printMatrix(int adjMatrix[MAXSIZE][MAXSIZE], int nCities)
 {
-   printf("\nDistances from Source:\n");
-   for (int i = 0; i < n; i++)
-      printf("%d \t\t %d\n", i, dist[i]);
+    for (int i = 0; i < nCities; i++ ) {
+        for (int j = 0; j < nCities; j++ ) {
+            printf("a[%d][%d] = %d\t", i, j, adjMatrix[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+int printResults(int dist[], int n)
+{
+    int results = -1;
+    printf("\nDistances from Source:\n");
+    for (int i = 0; i < n; i++)
+    {
+        printf("%d \t\t %d\n", i, dist[i]);
+        //results = dist[i] != -1 
+    }
+
+    return 1;
 }
