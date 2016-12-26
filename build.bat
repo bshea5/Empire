@@ -2,4 +2,4 @@
 call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64     
 set compilerflags=/Od /Zi /EHsc
 set linkerflags=/OUT:main.exe
-cl.exe %compilerflags% Empire.c main.c /link %linkerflags%
+cl.exe %compilerflags% main.c /link %linkerflags%

@@ -1,13 +1,32 @@
-/*
+/* =================================================================
     Imperial Messengers
 
     Author: Brandon Shea
     Compiler: Clang Version 19.10.24728 for x86
     Summary: 
-        Figure out how long it takes to send a message from the capitol throughout the Empire.
+        Figure out how long it takes to send a message from the capitol 
+        throughout the Empire.
 
-        Dijktra's Algorith is utilized to figure out the shortest routes from the capitol to each city.
-*/
+        Dijktra's Algorith is utilized to figure out the shortest routes 
+        from the capitol to each city.
+
+    Instructions:
+        ./main <filename> 
+        
+        Supply a file that fits the given input specs. The program will 
+        return the expected time to deliver the message throughout the 
+        Imperial cities.
+
+    Notes:
+        - INT_MAX is used to fill the initial distance results array. 
+        - Any path with that value, is considered in-accessible.
+
+    TimeTrack:
+        Enviroment and version control set up   - 2 hrs
+        File I/O and verifying valid inputs     - 4 hrs
+        Dijktra's Implementation                - 4 hrs
+        Testing and Documentation               - 4 hrs
+================================================================= */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,12 +36,14 @@
 
 #define MAXSIZE 100
 
+// =================================================================
+
 int minDistance(int dist[], int sptSet[], int nCities);
 void dijkstra(int adjMatrix[MAXSIZE][MAXSIZE], int src, int nCities);
 void printMatrix(int adjMatrix[MAXSIZE][MAXSIZE], int nCities);
 int printResults(int dist[], int n);
 
-// TODO: reformat for readabilities sake into Empire.h/.c files
+// =================================================================
 
 int main(int argc, char* argv[]) {
     int nCities = 0;    // 
@@ -35,8 +56,16 @@ int main(int argc, char* argv[]) {
     char line[60];      // track a single row of input
     char* token;        // track a single element in a row
 
+    if ( argc != 2 ) 
+    {
+        perror("Please supply a file name");
+        return -1;
+    }
+    printf("arg 0: %s", argv[1]);
+
     // opening file for reading 
-    FILE* fp = fopen("empire01.txt" , "r");
+    // FILE* fp = fopen("empire02.txt" , "r");
+    FILE* fp = fopen(argv[1] , "r");
 
     if(fp == NULL) 
     {
@@ -111,7 +140,7 @@ int main(int argc, char* argv[]) {
     fclose(fp);
     printf("Number of cities: %i \n", nCities);
     printMatrix(adjMatrix, nCities);
-    dijkstra(adjMatrix, 0, nCities);   
+    dijkstra(adjMatrix, 0, nCities);  // Assuming 0 index is the capitol 
 }
 
 // A utility function to find the vertex with minimum distance value, from
@@ -130,8 +159,9 @@ int minDistance(int dist[], int sptSet[], int nCities)
     return min_index;
 }
 
-// Funtion that implements Dijkstra's single source shortest path algorithm
+// Funtion that implements Dijkstra's from the src to each vertex
 // for a graph represented using adjacency matrix representation
+// In this case, src represents the index for our capital city
 void dijkstra(int graph[MAXSIZE][MAXSIZE], int src, int nCities)
 {
     int dist[MAXSIZE];      // The output array.  dist[i] will hold the shortest
@@ -167,6 +197,13 @@ void dijkstra(int graph[MAXSIZE][MAXSIZE], int src, int nCities)
                 && dist[u] != INT_MAX && dist[u]+graph[u][v] < dist[v])
             {
                 dist[v] = dist[u] + graph[u][v];
+
+                // handle values exceeding maximun integer
+                if (dist[v] < 0)
+                {
+                    perror("The empire is too vast. A path exceeds INT_MAX");
+                    return -1;
+                }
             }
         }
     }
@@ -187,13 +224,19 @@ void printMatrix(int adjMatrix[MAXSIZE][MAXSIZE], int nCities)
 
 int printResults(int dist[], int n)
 {
-    int results = -1;
+    int result = -1;
     printf("\nDistances from Source:\n");
     for (int i = 0; i < n; i++)
     {
         printf("%d \t\t %d\n", i, dist[i]);
-        //results = dist[i] != -1 
+        result =  result < dist[i] ? dist[i]: result;
     }
+
+    if (result == -1 || result == INT_MAX)
+        printf("\nMessage cannont be delivered.");
+    else
+        printf("\nMininum time required to deliver message throughout the Imperial Cities: %d cycles"
+            , result);
 
     return 1;
 }
