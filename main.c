@@ -12,7 +12,7 @@
 
     Instructions:
         ./main <filename> 
-        
+
         Supply a file that fits the given input specs. The program will 
         return the expected time to deliver the message throughout the 
         Imperial cities.
@@ -22,10 +22,10 @@
         - Any path with that value, is considered in-accessible.
 
     TimeTrack:
-        Enviroment and version control set up   - 2 hrs
-        File I/O and verifying valid inputs     - 4 hrs
-        Dijktra's Implementation                - 4 hrs
-        Testing and Documentation               - 4 hrs
+        Enviroment and version control set up       - 2 hrs
+        File I/O and verifying valid inputs         - 4 hrs
+        Dijktra's implementation                    - 4 hrs
+        Testing, reformatting, and documentation    - 6 hrs
 ================================================================= */
 
 #include <stdio.h>
@@ -38,10 +38,10 @@
 
 // =================================================================
 
-int minDistance(int dist[], int sptSet[], int nCities);
-void dijkstra(int adjMatrix[MAXSIZE][MAXSIZE], int src, int nCities);
+int minDistance(int dist[], int sPath[], int nCities);
+int dijkstra(int adjMatrix[MAXSIZE][MAXSIZE], int src, int nCities);
 void printMatrix(int adjMatrix[MAXSIZE][MAXSIZE], int nCities);
-int printResults(int dist[], int n);
+void printResults(int dist[], int nCities);
 
 // =================================================================
 
@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
 
     // can't initialize array with a given variable,
     // so just used the expected max size in the specs
-    int adjMatrix[MAXSIZE][MAXSIZE] = {0};
+    int adjMatrix[MAXSIZE][MAXSIZE] = { 0 };
     
     char line[60];      // track a single row of input
     char* token;        // track a single element in a row
@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
         return(-1);
     }
 
-    // first row should have one value, number of cities
+    // First row should have one value, number of cities.
     if (fgets(line, 100, fp))
     {
         token = strtok(line, " ");
@@ -92,16 +92,16 @@ int main(int argc, char* argv[]) {
         return(-1);
     }
 
-    // next n-1 lines should contain nRows values, either a number or a 'x'
+    // The next n-1 lines should contain nRows values, either a number or a 'x' character.
+    // Use these to construct the adjacency matrix.
     while(fgets(line, 100, fp)) 
     {
-        // track # of tokens per row, to compare to nRows
-        // if they don't match, than bad input
-        // number of inputs for a row should be the same as the row count
-        int nTokens = 0;     
+        int nTokens = 0;    // Track # of tokens per row, to compare to nRows.
+                            // If they don't match, than the input invalid.
+
         token = strtok(line, " ");
         
-        // walk through other tokens for distance values
+        // Walk through other tokens for distance values.
         while( token != NULL ) 
         {         
             if ( isdigit(*token) )
@@ -137,22 +137,29 @@ int main(int argc, char* argv[]) {
         nRows++;
     }
 
+    if (nRows != nCities)
+    {
+        printf("nRows: %i | nCities: %i \n", nRows, nCities);
+        perror("Error: Number of rows for matrix values does not mactch the number of cities given.");
+        return(-1);
+    }
+
+    printf("\nNumber of cities: %i \n", nCities);
     fclose(fp);
-    printf("Number of cities: %i \n", nCities);
     printMatrix(adjMatrix, nCities);
-    dijkstra(adjMatrix, 0, nCities);  // Assuming 0 index is the capitol 
+    dijkstra(adjMatrix, 0, nCities);  // assuming 0 index is the capitol 
 }
 
-// A utility function to find the vertex with minimum distance value, from
-// the set of vertices not yet included in shortest path tree
-int minDistance(int dist[], int sptSet[], int nCities)
+// Find the vertex with minimum distance value, from the set of 
+// vertices not yet included in shortest path tree
+int minDistance(int dist[], int sPath[], int nCities)
 {
     // Initialize min value
     int min = INT_MAX, min_index;
 
     for (int v = 0; v < MAXSIZE; v++)
     {
-        if (sptSet[v] == 0 && dist[v] <= min)
+        if (sPath[v] == 0 && dist[v] <= min)
             min = dist[v], min_index = v;
     }
     
@@ -162,19 +169,19 @@ int minDistance(int dist[], int sptSet[], int nCities)
 // Funtion that implements Dijkstra's from the src to each vertex
 // for a graph represented using adjacency matrix representation
 // In this case, src represents the index for our capital city
-void dijkstra(int graph[MAXSIZE][MAXSIZE], int src, int nCities)
+int dijkstra(int graph[MAXSIZE][MAXSIZE], int src, int nCities)
 {
     int dist[MAXSIZE];      // The output array.  dist[i] will hold the shortest
                             // distance from src to i
 
-    int sptSet[MAXSIZE];    // sptSet[i] will 1 if vertex i is included in shortest
+    int sPath[MAXSIZE];     // sPath[i] will be 1 if vertex i is included in shortest
                             // path tree or shortest distance from src to i is finalized
 
-    // Initialize all distances as INFINITE and stpSet[] as 0
+    // Initialize all distances as INT_MAX and stpSet[] as 0
     for (int i = 0; i < MAXSIZE; i++)
-        dist[i] = INT_MAX, sptSet[i] = 0;
+        dist[i] = INT_MAX, sPath[i] = 0;
 
-    // Distance of source vertex from itself is always 0
+    // Distance of source vertex(the Capitol in this case) from itself is always 0
     dist[src] = 0;
 
     // Find shortest path for all vertices
@@ -182,23 +189,26 @@ void dijkstra(int graph[MAXSIZE][MAXSIZE], int src, int nCities)
     {
         // Pick the minimum distance vertex from the set of vertices not
         // yet processed. u is always equal to src in first iteration.
-        int u = minDistance(dist, sptSet, nCities);
+        int u = minDistance(dist, sPath, nCities);
 
         // Mark the picked vertex as processed
-        sptSet[u] = 1;
+        sPath[u] = 1;
 
-        // Update dist value of the adjacent vertices of the picked vertex.
+        // Update distance value of the adjacent vertices of the picked vertex.
         for (int v = 0; v < nCities; v++)
         {
-            // Update dist[v] only if is not in sptSet, there is an edge from 
-            // u to v, and total weight of path from src to  v through u is 
-            // smaller than current value of dist[v]
-            if (!sptSet[v] && (graph[u][v] && graph[u][v] != -1) 
-                && dist[u] != INT_MAX && dist[u]+graph[u][v] < dist[v])
-            {
-                dist[v] = dist[u] + graph[u][v];
+            int newDistance = dist[u] + graph[u][v];
 
-                // handle values exceeding maximun integer
+            // Update dist[v] if v is not in sPath and an edge exists between u and v
+            // and total distance of sPath from src to v through u is less than current value of dist[v]
+            if (!sPath[v] 
+                && (graph[u][v] && graph[u][v] != -1) 
+                && dist[u] != INT_MAX 
+                && newDistance < dist[v])
+            {
+                dist[v] = newDistance;
+
+                // handle distances that exceed the maximun integer and turn negative
                 if (dist[v] < 0)
                 {
                     perror("The empire is too vast. A path exceeds INT_MAX");
@@ -208,8 +218,8 @@ void dijkstra(int graph[MAXSIZE][MAXSIZE], int src, int nCities)
         }
     }
 
-    // print the constructed distance array
     printResults(dist, nCities);
+    return 1;
 }
 
 void printMatrix(int adjMatrix[MAXSIZE][MAXSIZE], int nCities)
@@ -222,21 +232,20 @@ void printMatrix(int adjMatrix[MAXSIZE][MAXSIZE], int nCities)
     }
 }
 
-int printResults(int dist[], int n)
+// print the constructed distance array and the minimum time required
+void printResults(int dist[], int nCities)
 {
     int result = -1;
     printf("\nDistances from Source:\n");
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < nCities; i++)
     {
         printf("%d \t\t %d\n", i, dist[i]);
         result =  result < dist[i] ? dist[i]: result;
     }
 
     if (result == -1 || result == INT_MAX)
-        printf("\nMessage cannont be delivered.");
+        printf("\n\nMessage cannot be delivered.\n\n");
     else
-        printf("\nMininum time required to deliver message throughout the Imperial Cities: %d cycles"
+        printf("\n\nMininum time required to deliver message throughout the Imperial Cities: %d\n\n"
             , result);
-
-    return 1;
 }
