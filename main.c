@@ -1,4 +1,4 @@
-/* =================================================================
+/* =====================================================================
     Imperial Messengers
 
     Author: Brandon Shea
@@ -18,16 +18,18 @@
         Imperial cities.
 
     Notes:
+        - The capitol is assumed to be city index 0.
         - INT_MAX is used to fill the initial distance results array. 
           Any path with that value, is considered invalid since it is
           used for initial values in the distance array.
+        - 0 is an acceptable distance input for a path(teleports I suppose).
 
     TimeTrack:
         Enviroment and version control set up       - 2 hrs
         File I/O and verifying valid inputs         - 4 hrs
         Dijktra's implementation                    - 4 hrs
-        Testing, reformatting, and documentation    - 6 hrs
-================================================================= */
+        Testing, reformatting, and documentation    - 8 hrs
+===================================================================== */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,15 +38,16 @@
 #include <limits.h>
 
 #define MAXSIZE 100
+#define LINESIZE 1000
 
-// =================================================================
+// =====================================================================
 
 int minDistance(int dist[], int sPath[], int nCities);
 int dijkstra(int adjMatrix[MAXSIZE][MAXSIZE], int src, int nCities);
 void printMatrix(int adjMatrix[MAXSIZE][MAXSIZE], int nCities);
-void printResults(int dist[], int nCities);
+void printResults(int dist[], int nCities, int src);
 
-// =================================================================
+// =====================================================================
 
 int main(int argc, char* argv[]) {
     int nCities = 0;    // 
@@ -54,8 +57,8 @@ int main(int argc, char* argv[]) {
     // so just used the expected max size in the specs
     int adjMatrix[MAXSIZE][MAXSIZE] = { 0 };
     
-    char line[60];      // track a single row of input
-    char* token;        // track a single element in a row
+    char line[LINESIZE];    // track a single row of input
+    char* token;            // track a single element in a row
 
     if ( argc != 2 ) 
     {
@@ -75,7 +78,7 @@ int main(int argc, char* argv[]) {
     }
 
     // First row should have one value, number of cities.
-    if (fgets(line, 100, fp))
+    if (fgets(line, LINESIZE, fp))
     {
         token = strtok(line, " ");
 
@@ -95,7 +98,7 @@ int main(int argc, char* argv[]) {
 
     // The next n-1 lines should contain nRows values, either a number or a 'x' character.
     // Use these to construct the adjacency matrix.
-    while(fgets(line, 100, fp)) 
+    while(fgets(line, LINESIZE, fp)) 
     {
         int nTokens = 0;    // Track # of tokens per row, to compare to nRows.
                             // If they don't match, than the input invalid.
@@ -119,7 +122,7 @@ int main(int argc, char* argv[]) {
             else
             {
                 printf("Invalid input: %s", token);
-                perror("Error: Invalid input found");
+                printf("Error: Invalid input found\n");
                 return(-1);
             }
     
@@ -129,9 +132,8 @@ int main(int argc, char* argv[]) {
 
         if (nTokens != nRows)
         {
-            printf("Incorrect number of tokens for row\n");
             printf("nRows: %i | nTokens: %i \n", nRows, nTokens);
-            perror("Error: Incorrect number of tokens");
+            printf("Incorrect number of tokens for row\n");
             return(-1);
         }
 
@@ -141,7 +143,7 @@ int main(int argc, char* argv[]) {
     if (nRows != nCities)
     {
         printf("nRows: %i | nCities: %i \n", nRows, nCities);
-        perror("Error: Number of rows for matrix values does not mactch the number of cities given.");
+        printf("Error: Number of rows for matrix values does not mactch the number of cities given.\n");
         return(-1);
     }
 
@@ -200,11 +202,10 @@ int dijkstra(int graph[MAXSIZE][MAXSIZE], int src, int nCities)
         {
             int newDistance = dist[u] + graph[u][v];
 
-            // Update dist[v] if v is not in sPath and an edge exists between u and v
-            // and total distance of sPath from src to v through u is less than current value of dist[v]
             if (!sPath[v] 
-                && (graph[u][v] && graph[u][v] != -1) 
-                && dist[u] != INT_MAX 
+                && (graph[u][v] || graph[u][v] == 0)    // 0 is acceptable, think teleports 
+                && graph[u][v] > -1                     // negative represents blocked path
+                && dist[u] != INT_MAX
                 && newDistance < dist[v])
             {
                 dist[v] = newDistance;
@@ -212,14 +213,14 @@ int dijkstra(int graph[MAXSIZE][MAXSIZE], int src, int nCities)
                 // handle distances that exceed the maximun integer and turn negative
                 if (dist[v] < 0)
                 {
-                    perror("The empire is too vast. A path exceeds INT_MAX");
+                    printf("\nThe empire is too vast. A path exceeds INT_MAX: %d\n", dist[v]);
                     return -1;
                 }
             }
         }
     }
 
-    printResults(dist, nCities);
+    printResults(dist, nCities, src);
     return 1;
 }
 
@@ -234,19 +235,23 @@ void printMatrix(int adjMatrix[MAXSIZE][MAXSIZE], int nCities)
 }
 
 // print the constructed distance array and the minimum time required
-void printResults(int dist[], int nCities)
+void printResults(int dist[], int nCities, int src)
 {
     int result = -1;
     printf("\nDistances from Source:\n");
     for (int i = 0; i < nCities; i++)
     {
-        printf("%d \t\t %d\n", i, dist[i]);
-        result =  result < dist[i] ? dist[i]: result;
+        printf("%d%s \t %d\n", 
+            i, 
+            i == src ? " (Capitol)" : "\t", 
+            dist[i]
+        );
+        result = result < dist[i] ? dist[i]: result;
     }
 
     if (result == -1 || result == INT_MAX)
         printf("\n\nMessage cannot be delivered.\n\n");
     else
-        printf("\n\nMininum time required to deliver message throughout the Imperial Cities: %d\n\n"
+        printf("\n\nMininum time required to deliver message throughout the Imperial Cities:\033[32m %d \033[0m\n\n"
             , result);
 }
