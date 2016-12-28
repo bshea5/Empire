@@ -252,6 +252,6 @@ void printResults(int dist[], int nCities, int src)
     if (result == -1 || result == INT_MAX)
         printf("\n\nMessage cannot be delivered.\n\n");
     else
-        printf("\n\nMininum time required to deliver message throughout the Imperial Cities:\033[32m %d \033[0m\n\n"
+        printf("\n\nMininum time required to deliver message throughout the Imperial Cities: %d \n\n"
             , result);
 }
