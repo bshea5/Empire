@@ -29,6 +29,7 @@
         File I/O and verifying valid inputs         - 4 hrs
         Dijktra's implementation                    - 4 hrs
         Testing, reformatting, and documentation    - 8 hrs
+
 ===================================================================== */
 
 #include <stdio.h>
@@ -58,14 +59,14 @@ int main(int argc, char* argv[]) {
     int adjMatrix[MAXSIZE][MAXSIZE] = { 0 };
     
     char line[LINESIZE];    // track a single row of input
-    char* token;            // track a single element in a row
+    char* token;            // track a single element in a row 
 
     if ( argc != 2 ) 
     {
-        perror("Please supply a file name");
+        printf("Please supply a file name");
         return -1;
     }
-    printf("arg 0: %s", argv[1]);
+    printf("Filename: %s\n", argv[1]);
 
     // opening file for reading 
     // FILE* fp = fopen("empire02.txt" , "r");
@@ -86,13 +87,19 @@ int main(int argc, char* argv[]) {
             nCities = atoi(token); 
         else 
         {
-            perror("Error: First value must be a valid number");
+            printf("Error: First value must be a valid number");
             return(-1);
         }
     }
     else 
     {
         perror("Error: Invalid input");
+        return(-1);
+    }
+
+    if (nCities > 100)
+    {
+        printf("Maximun # of cities allowed is: %d", MAXSIZE);
         return(-1);
     }
 
@@ -147,7 +154,7 @@ int main(int argc, char* argv[]) {
         return(-1);
     }
 
-    printf("\nNumber of cities: %i \n", nCities);
+    printf("Number of cities: %i \n\n", nCities);
     fclose(fp);
     printMatrix(adjMatrix, nCities);
     dijkstra(adjMatrix, 0, nCities);  // assuming 0 index is the capitol 
