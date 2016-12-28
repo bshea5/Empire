@@ -28,7 +28,7 @@
         Enviroment and version control set up       - 2 hrs
         File I/O and verifying valid inputs         - 4 hrs
         Dijktra's implementation                    - 4 hrs
-        Testing, reformatting, and documentation    - 8 hrs
+        Testing, reformatting, and documentation    - 9 hrs
 
 ===================================================================== */
 
