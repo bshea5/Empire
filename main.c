@@ -181,7 +181,7 @@ int minDistance(int dist[], int sPath[], int nCities)
 // In this case, src represents the index for our capital city
 int dijkstra(int graph[MAXSIZE][MAXSIZE], int src, int nCities)
 {
-    int dist[MAXSIZE];      // The output array.  dist[i] will hold the shortest
+    int dist[MAXSIZE];      // The output array. dist[i] will hold the shortest
                             // distance from src to i
 
     int sPath[MAXSIZE];     // sPath[i] will be 1 if vertex i is included in shortest
@@ -253,7 +253,7 @@ void printResults(int dist[], int nCities, int src)
             i == src ? " (Capitol)" : "\t", 
             dist[i]
         );
-        result = result < dist[i] ? dist[i]: result;
+        result = result <= dist[i] ? dist[i]: result;
     }
 
     if (result == -1 || result == INT_MAX)

@@ -3,7 +3,7 @@
 from random import randint
 
 file = open("pyEmpire.txt", "w")
-MYMAX = 100
+MYMAX = 50
 count = 1
 
 file.write(str(MYMAX) + "\n")
